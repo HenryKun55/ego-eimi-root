@@ -1,38 +1,96 @@
-name: Root CI
+# .github/workflows/ci.yml
+name: CI - Root Backend
 
 on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
 
 jobs:
-  backend:
-    name: Test Backend
+  backend-tests:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ego_eimi
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      NODE_ENV: test
+      JWT_SECRET: dummy-secret
+      OPEN_API_KEY: ${{ secrets.OPEN_API_KEY }}
+      QDRANT_URL: http://localhost:6333
+      QDRANT_COLLECTION: document_chunks
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_DATABASE: ego_eimi
+      USE_EMBEDDING_MOCK: true
 
     defaults:
       run:
         working-directory: apps/backend
 
     steps:
-      - name: Checkout code with submodules
+      - name: 📥 Checkout com submódulo
         uses: actions/checkout@v3
         with:
           submodules: true
-          fetch-depth: 0
 
-      - name: Setup Bun
+      - name: 🔧 Setup Bun
         uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
 
-      - name: Install dependencies
+      - name: 🧩 Setup pgvector
+        uses: cpunion/setup-pgvector@main
+        with:
+          postgres-version: '14'
+          postgres-user: 'postgres'
+          postgres-password: 'postgres'
+          postgres-db: 'ego_eimi'
+
+      - name: 🔐 Criar extensão vector
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d ego_eimi -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+
+      - name: 🐳 Start Qdrant
+        run: docker compose -f docker-compose.yml up -d qdrant
+
+      - name: ⏳ Aguardar Qdrant
+        run: |
+          for i in {1..10}; do
+            if curl -s http://localhost:6333/collections | grep -q 'collections'; then
+              echo "✅ Qdrant está pronto"
+              break
+            fi
+            echo "⏳ Aguardando Qdrant..."
+            sleep 3
+          done
+
+      - name: 📦 Install deps
         run: bun install
 
-      - name: Install Nest CLI
+      - name: 🚀 Nest CLI global
         run: bun add -g @nestjs/cli
 
-      - name: Run prepare script
+      - name: 🌱 Migrate e seed
         run: bun run prepare:full-clean
 
-      - name: Run tests
+      - name: 🧪 Unit tests
         run: bun run test
 
+      - name: 🧪 E2E tests
+        run: bun run test:e2e
