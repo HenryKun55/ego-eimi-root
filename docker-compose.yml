@@ -1,0 +1,67 @@
+services:
+  backend:
+    container_name: backend
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    env_file:
+      - ./.env
+    command: >
+      sh -c "
+        echo '⏳ Esperando Postgres...';
+        while ! nc -z postgres 5432; do sleep 1; done;
+        echo '✅ Postgres pronto.';
+
+        echo '⏳ Esperando Qdrant...';
+        while ! nc -z qdrant 6333; do sleep 1; done;
+        echo '✅ Qdrant pronto.';
+
+        echo '🔧 Rodando prepare:full-clean...';
+        bun run prepare:full-clean;
+
+        echo '🚀 Iniciando backend...';
+        bun run start:prod
+      "
+
+  qdrant:
+    image: qdrant/qdrant
+    container_name: qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_DATABASE}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  qdrant_storage:
+  postgres_data:
