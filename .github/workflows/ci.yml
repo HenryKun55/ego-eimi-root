@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Install Nest CLI
+        run: bun add -g @nestjs/cli
+
       - name: Run prepare script
         run: bun run prepare:full-clean
 
