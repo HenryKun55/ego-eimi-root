@@ -24,6 +24,28 @@ services:
         bun run start:prod
       "
 
+  seed:
+    container_name: seeder
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    depends_on:
+      backend:
+        condition: service_started
+    env_file:
+      - ./.env
+    entrypoint: ["/bin/sh", "-c", "./src/scripts/seed.sh"]
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "4173:4173"
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+
   postgres:
     image: ankane/pgvector:latest
     container_name: postgres
