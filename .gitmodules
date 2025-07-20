@@ -1,3 +1,6 @@
 [submodule "apps/backend"]
 	path = apps/backend
 	url = git@github.com:HenryKun55/ego-eimi-backend.git
+[submodule "apps/frontend"]
+	path = apps/frontend
+	url = git@github.com:HenryKun55/ego-eimi-frontend.git
