@@ -64,7 +64,7 @@ Edite os arquivos `.env` com suas configurações locais (ou mantenha os valores
 ### 3. Suba todos os serviços
 
 ```bash
-docker compose up -d
+make clean && make build
 ```
 
 ---
