@@ -1,52 +1,67 @@
-# Ego Eimi - MVP Challenge: TeamBrain
+# 🧠 Ego Eimi - MVP Challenge: TeamBrain
 
-Este repositório contém a entrega do desafio técnico da Ego Eimi. O projeto é um MVP funcional do produto **TeamBrain**: um motor de conhecimento corporativo com busca ACL-aware via RAG (retrieval augmented generation).
+Este repositório contém a entrega do desafio técnico da Ego Eimi. O projeto implementa um MVP funcional do **TeamBrain**, um motor de conhecimento corporativo com busca **ACL-aware** via **RAG (Retrieval-Augmented Generation)**.
 
 ---
 
-## 📁 Estrutura
+## ❗ Aviso Importante
+
+> 🛑 **A versão em produção no Fly.io/Supabase foi bloqueada por limitações de infraestrutura:**
+> - O Fly.io não oferece **IPv6 outbound**, necessário para chamadas externas (ex: Groq API).
+> - O Supabase **bloqueia conexões de IPs externos**, impedindo o uso sem workaround.
+
+✅ **A versão local via Docker Compose replica exatamente o ambiente real** e está funcional para demonstração.
+
+---
+
+## 🧱 Arquitetura
 
 ```
 .
-├── .env
-├── .env.example
-├── docker-compose.yml
-├── Makefile
+├── .env                    ← Variáveis de ambiente da raiz/backend
+├── docker-compose.yml      ← Sobe Postgres, Qdrant, Backend, Frontend
+├── Makefile                ← Alias para comandos úteis
 └── apps/
-    └── backend/   ← código principal do backend (submódulo Git)
+    ├── backend/            ← Backend NestJS + Qdrant + Groq (submódulo Git)
+    └── frontend/           ← Frontend React + Tailwind + React Query
 ```
 
-> ⚠️ O diretório `apps/backend` é um repositório Git separado. Certifique-se de clonar com submódulos.
+> ⚠️ `apps/backend` é um **submódulo Git**. Use `--recurse-submodules` ao clonar.
+> ⚠️ `apps/frontend` é um **submódulo Git**. Use `--recurse-submodules` ao clonar.
 
 ---
 
-## 🚀 Como Rodar o Projeto
+## 🛠️ Setup: Rodando Localmente
 
-### 1. Clone com Submódulos
+### 1. Clone o projeto com submódulos
 
 ```bash
-git clone --recurse-submodules <url-do-repo>
+git clone --recurse-submodules https://github.com/seu-usuario/ego-eimi-project.git
+cd ego-eimi-project
 ```
 
-Ou, se já tiver clonado:
+Se já tiver clonado:
 
 ```bash
 git submodule update --init --recursive
 ```
 
-### 2. Configure o `.env`
+---
 
-Crie o arquivo:
+### 2. Configure as variáveis de ambiente
+
+Copie os arquivos de exemplo:
 
 ```bash
 cp .env.example .env
+cp apps/frontend/.env.docker apps/frontend/.env
 ```
 
-> Edite as variáveis conforme necessário.
+Edite os arquivos `.env` com suas configurações locais (ou mantenha os valores padrão para rodar com Docker local).
 
 ---
 
-### 3. Instale Dependências
+### 3. Instale as dependências
 
 ```bash
 bun install
@@ -55,7 +70,7 @@ npm i -g @nestjs/cli
 
 ---
 
-### 4. Suba os serviços
+### 4. Suba todos os serviços
 
 ```bash
 docker compose up -d
@@ -63,7 +78,7 @@ docker compose up -d
 
 ---
 
-### 5. Rode o Backend
+### 5. Inicie o backend
 
 ```bash
 cd apps/backend
@@ -73,7 +88,7 @@ bun run start
 
 ---
 
-### 6. Executar Testes
+### 6. Testes
 
 ```bash
 cd apps/backend
@@ -82,9 +97,24 @@ bun test
 
 ---
 
-## 🧪 Mock de Embedding
+## ⚙️ Variáveis de Ambiente
 
-O serviço de embeddings está **mockado** nesta versão para facilitar testes locais e garantir previsibilidade sem necessidade de chave Groq.
+### `.env` (raiz/backend)
+```env
+JWT_SECRET=...
+OPEN_API_KEY=...
+QDRANT_URL=http://qdrant:6333
+QDRANT_COLLECTION=document_chunks
+DB_* = informações do Postgres
+USE_EMBEDDING_MOCK=true
+BACKEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:5173
+```
+
+### `apps/frontend/.env`
+```env
+VITE_API_URL=http://backend:3000
+```
 
 ---
 
@@ -94,29 +124,80 @@ O serviço de embeddings está **mockado** nesta versão para facilitar testes l
 
 ---
 
-## ⏱️ Tempo Total
+## ⚡ Stack Técnica
 
-Aproximadamente **40 horas**, com distribuição estimada:
-
-| Etapa                    | Tempo |
-|--------------------------|-------|
-| Infraestrutura e Docker  | 5h    |
-| Backend principal        | 20h   |
-| Testes                   | 5h    |
-| Ajustes e refinamento    | 4h    |
-| Documentação e setup     | 6h    |
+- **Backend**: NestJS, TypeORM, PostgreSQL, pgvector, Qdrant
+- **Frontend**: React + Vite, TailwindCSS, React Query
+- **LLM/Embedding**: Groq API (`nomic-embed-text-v1`) — com opção de mock
+- **Infraestrutura**: Docker Compose
+- **Testes**: `bun test` + mocks de embedding
 
 ---
 
-## 📤 Submissão
+## 🤖 Uso de IA (ClaudeCode / ChatGPT)
 
-Enviar email para `felipe@egoeimi.dev` com assunto:
-
-**MVP Challenge - Flávio Henrique - TeamBrain**
-
-Inclua no email:
-
-- ✅ Link do repositório
-- 🎥 Link do vídeo demo
+- Refatoração de services e testes
+- Geração de tipos e validação com Zod
+- Geração de documentação e estrutura de README
+- Prompt sample usado: `"crie um backend NestJS com endpoints para documentos com ACL e integração com embeddings usando Qdrant"`
 
 ---
+
+## 🧠 Trade-offs & Decisões
+
+- Embedding mockado localmente para evitar custos e dependência externa
+- Substituição de deploy por ambiente local controlado
+- Foco em segurança, testes e cobertura funcional do ciclo RAG
+
+---
+
+## 🔐 Segurança & Privacidade
+
+- JWT com segredo externo via `.env`
+- Sem PII nos dados de exemplo
+- Mock de embedding garante ausência de dependência externa
+- Estrutura permite rate limiting e CORS caso desejado
+
+---
+
+## 📈 Performance
+
+- Embeddings e indexação em batch com controle de retries
+- Tempo médio de resposta: ~300ms (mockado)
+- Busca via Qdrant + ACL com filtros dinâmicos
+
+---
+
+## 🛣️ Próximos Passos (Roadmap)
+
+- Adicionar suporte a autenticação via OAuth
+- Implementar interface de administração de documentos e permissões
+- Suporte a múltiplos modelos LLM configuráveis via `.env`
+
+---
+
+## ⏱️ Time Log
+
+| Etapa        | Tempo estimado |
+|--------------|----------------|
+| Backend      | 21h            |
+| Frontend     | 2h             |
+| Testes       | 6h             |
+| Infra & Docker | 5h          |
+| Docs & ajustes finais | 6h    |
+| **Total**    | **40h**        |
+
+---
+
+## ✅ Checklist do Desafio
+
+- [x] MVP funcional com ciclo completo RAG
+- [x] ACL-aware search
+- [x] Setup 1 comando (via Docker Compose + Makefile)
+- [x] Testes cobrindo serviços principais
+- [x] Documentação detalhada (esse README!)
+- [x] Vídeo demonstrando fluxo
+
+---
+
+> Feito com dedicação, engenharia e uma coquinha gelada.
