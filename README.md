@@ -61,29 +61,10 @@ Edite os arquivos `.env` com suas configurações locais (ou mantenha os valores
 
 ---
 
-### 3. Instale as dependências
-
-```bash
-bun install
-npm i -g @nestjs/cli
-```
-
----
-
-### 4. Suba todos os serviços
+### 3. Suba todos os serviços
 
 ```bash
 docker compose up -d
-```
-
----
-
-### 5. Inicie o backend
-
-```bash
-cd apps/backend
-bun run prepare:full-clean
-bun run start
 ```
 
 ---
@@ -92,26 +73,59 @@ bun run start
 
 ```bash
 cd apps/backend
-bun test
+bun i && bun run prepare:full-clean
+# para rodar os testes unitários
+bun run test
+# para rodar os testes e2e
+bun run test:e2e
 ```
 
 ---
 
 ## ⚙️ Variáveis de Ambiente
 
-### `.env` (raiz/backend)
+### `.env` (raiz)
 ```env
 JWT_SECRET=...
 OPEN_API_KEY=...
-QDRANT_URL=http://qdrant:6333
+QDRANT_URL=...
+QDRANT_API_KEY=...
 QDRANT_COLLECTION=document_chunks
-DB_* = informações do Postgres
+DB_HOST=postgres
+DB_PORT=5432
+DB_USER=postgres
+DB_PASS=postgres
+DB_DATABASE=test
+USE_EMBEDDING_MOCK=true
+BACKEND_URL=http://backend:3000
+FRONTEND_URL=http://frontend:4173
+CLEAR_QDRANT_ON_BOOT=true
+```
+
+### `apps/backend/.env`
+```env
+JWT_SECRET=...
+OPEN_API_KEY=...
+QDRANT_URL=...
+QDRANT_API_KEY=...
+QDRANT_COLLECTION=document_chunks
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASS=postgres
+DB_DATABASE=test
 USE_EMBEDDING_MOCK=true
 BACKEND_URL=http://localhost:3000
 FRONTEND_URL=http://localhost:5173
+CLEAR_QDRANT_ON_BOOT=true
 ```
 
 ### `apps/frontend/.env`
+```env
+VITE_API_URL=http://localhost:3000
+```
+
+### `apps/frontend/.env.docker`
 ```env
 VITE_API_URL=http://backend:3000
 ```
@@ -163,7 +177,7 @@ VITE_API_URL=http://backend:3000
 ## 📈 Performance
 
 - Embeddings e indexação em batch com controle de retries
-- Tempo médio de resposta: ~300ms (mockado)
+- Tempo médio de resposta: ~600ms (mockado)
 - Busca via Qdrant + ACL com filtros dinâmicos
 
 ---
@@ -184,8 +198,8 @@ VITE_API_URL=http://backend:3000
 | Frontend     | 2h             |
 | Testes       | 6h             |
 | Infra & Docker | 5h          |
-| Docs & ajustes finais | 6h    |
-| **Total**    | **40h**        |
+| Docs & ajustes finais | 11h    |
+| **Total**    | **45h**        |
 
 ---
 
